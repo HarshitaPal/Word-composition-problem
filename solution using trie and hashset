@@ -1,0 +1,80 @@
+_concat_word.rb
+require 'trie'
+
+class LongestConcatWord
+    def initialize(file)
+        @trie = Trie.new
+        @word_hash = Hash.new
+        @original_word = nil
+        @file = file
+        @concat_words = []
+        @count = 0
+    end
+
+    def read_file(file)
+        @words = File.open(file, 'rb').read
+    end
+
+    def build(words, trie, hash)
+        words.each_line do |word|
+            word_chomp = word.chomp
+            trie.add word_chomp
+            hash[word_chomp] = word.length
+        end
+    end
+
+    def sort_by_length(hash)
+        Hash[hash.sort_by {|word, length| length }.reverse]
+    end
+    
+    def find_prefix(word, contains=[])
+        1.upto(word.length - 1) do |index| 
+            pref = word[0..index]
+            suffix = word[index+1..-1]
+
+            if @trie.has_key?(pref)
+                if @trie.has_key?(suffix)
+                    @concat_words << @original_word
+                    @count += 1
+                    break
+                end
+                find_prefix(suffix, contains)
+            end
+        end
+    end
+
+    def get_concat_words
+        read_file(@file)
+        build(@words, @trie, @word_hash)
+        @words_by_length_hash = sort_by_length(@word_hash)
+        @words_by_length_hash.each_key { |word|
+            @original_word = word
+            find_prefix(word)
+            if !@concat_words.empty?
+                if @concat_words.length == 2
+                @longest_concat_word = @concat_words[0]
+                @second_longest_concat_word = @concat_words[1]
+                end
+            end
+        }
+    end
+
+    def longest_concat_word
+        puts "The longest word made up of other words is: #{@longest_concat_word}"
+    end
+
+    def second_longest_concat_word
+        puts "The second longest word made up of other words is: #{@second_longest_concat_word} "
+    end
+
+    def count_concat_words(count)
+        puts "There are #{count} words made up of other words"
+    end
+
+    def display_results
+        get_concat_words
+        longest_concat_word
+        second_longest_concat_word
+        count_concat_words(@count)
+    end
+end
